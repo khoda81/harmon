@@ -2,3 +2,5 @@
 dataset
 model
 tmp
+src/**/__pycache__
+.pytest_cache
