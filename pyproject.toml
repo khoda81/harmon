@@ -28,7 +28,3 @@ exclude_also = [
     "if __name__ == .__main__.:",
     "if TYPE_CHECKING:",
 ]
-
-[tool.pytest.ini_options]
-addopts = "--doctest-modules --doctest-report ndiff --doctest-glob='*.rst' --doctest-glob='*.txt'"
-doctest_optionflags = "NORMALIZE_WHITESPACE ELLIPSIS"

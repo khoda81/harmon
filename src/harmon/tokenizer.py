@@ -61,7 +61,7 @@ class DecodeConfig:
 @attrs.define
 class Segment:
     content: str
-    token_ids: list
+    origin: list[int]
     is_special_token: bool = False
 
 
@@ -76,7 +76,7 @@ class SegmentedParser:
 
         # parser context
         self.padding_counter = 0
-        self.text_bytes = []
+        self.text_bytes: list[int] = []
         self.output_buffer: collections.deque[Segment] = collections.deque()
 
     def fill(self, segments: Iterable[Segment]):
@@ -92,7 +92,7 @@ class SegmentedParser:
 
     def special_token(self, token_id: int):
         special_token = self.tokenizer.decode_special_token(token_id)
-        return Segment(special_token, token_ids=[token_id], is_special_token=True)
+        return Segment(special_token, origin=[token_id], is_special_token=True)
 
     def _decode_text(self):
         token_ids = self.text_bytes.copy()
