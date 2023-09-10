@@ -20,18 +20,31 @@ Harmon Chess Engine is a cutting-edge chess engine that leverages the power of t
 
 ### Installation
 
-1. Clone the Harmon Chess Engine repository:
+```bash
+pip install harmon
+```
 
-   ```bash
-   git clone https://github.com/yourusername/harmon-chess-engine.git
-   cd harmon-chess-engine
-   ```
+### Usage
 
-2. Install the required dependencies:
+1. Train the model with your preferred dataset, such as PGN files from lichess.
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+2. Configure Harmon's settings and model parameters to suit your needs.
+
+3. Run Harmon to analyze games, predict outcomes, or play chess against it.
+
+### Example Usage
+
+#### Train the model
+
+```bash
+python -m harmon.train
+```
+
+#### Generate
+
+```bash
+python -m harmon.generate
+```
 
 ## Contributing
 

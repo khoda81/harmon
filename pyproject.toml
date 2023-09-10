@@ -1,10 +1,24 @@
 [tool.poetry]
 name = "harmon"
-version = "0.1.0"
+version = "0.1.1"
 description = "A chess engine that considers human mistakes"
 authors = ["Mahdi Khodabandeh <20.mahdikh.0@gmail.com>"]
 license = "MIT"
 readme = "README.md"
+repository = "https://github.com/khoda81/harmon"
+classifiers = [
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
+    "Topic :: Games/Entertainment :: Board Games",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Framework :: Pytest",
+    "Natural Language :: English",
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+]
 
 [tool.poetry.dependencies]
 python = "^3.9"
@@ -30,3 +44,7 @@ exclude_also = [
     "if __name__ == .__main__.:",
     "if TYPE_CHECKING:",
 ]
+
+[tool.pytest.ini_options]
+addopts = "--doctest-modules --doctest-report ndiff --doctest-glob='*.rst' --doctest-glob='*.txt' --cov='harmon' --cov-config=.coveragerc"
+doctest_optionflags = "NORMALIZE_WHITESPACE ELLIPSIS"

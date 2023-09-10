@@ -4,7 +4,6 @@
     "python.testing.pytestArgs": [
         "-v"
     ],
-    "coverage-gutters.coverageReportFileName": "report/coverage.xml",
     "python.testing.autoTestDiscoverOnSaveEnabled": false,
     "[python]": {
         "editor.formatOnSave": true,
