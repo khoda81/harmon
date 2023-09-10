@@ -12,6 +12,8 @@ bidict = ">=0.22.1"
 torch = "==1.12.1"
 more-itertools = "^10.1.0"
 attrs = "^23.1.0"
+zstandard = "^0.21.0"
+python-chess = "^1.999"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.2"

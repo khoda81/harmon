@@ -7,7 +7,6 @@ from typing import Iterable
 class ContextFiller:
     """Try to fit as many samples as possible into the context of a transformer.
 
-
     Attributes:
         context_size: The context size of the transformer.
         fill: An integer which is used to fill up the empty spaces in context.
@@ -26,12 +25,15 @@ class ContextFiller:
     ...     list(range(1, 7)),
     ...     list(range(1, 11)),
     ...     list(range(1, 9)),
+    ...     list(range(1, 15)),
+    ...     list(range(1, 13)),
+    ...     list(range(1, 7)),
     ... ])
     >>> context_filler.get_batch(2)
     [[1, 2, 3, 4, 5, 6, 7, 8, 9], [1, 2, 3, 4, 0, 0, 0, 0, 0]]
     >>> context_filler.context_size = 16
     >>> context_filler.get_batch(2)
-    [[1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [1, 2, 3, 4, 5, 6, 7, 8, 0, 0, 0, 0, 0, 0, 0, 0]]
+    [[1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 0, 0]]
     """
 
     def __init__(

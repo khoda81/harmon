@@ -33,36 +33,6 @@ Harmon Chess Engine is a cutting-edge chess engine that leverages the power of t
    pip install -r requirements.txt
    ```
 
-### Usage
-
-1. Train the model with your preferred dataset, such as PGN files from lichess.
-
-2. Configure Harmon's settings and model parameters to suit your needs.
-
-3. Run Harmon to analyze games, predict outcomes, or play chess against it.
-
-### Example Usage
-
-```python
-# Import the Harmon Chess Engine library
-import harmon
-
-# Create a Harmon instance
-engine = harmon.ChessEngine()
-
-# Load a pre-trained transformer model
-engine.load_model("path/to/pretrained/model")
-
-# Analyze a chess game
-analysis = engine.analyze_game("path/to/your/game.pgn")
-
-# Get Elo predictions for players
-elo_predictions = engine.predict_elo("path/to/players.pgn")
-
-# Predict the outcome of a game
-outcome_prediction = engine.predict_game_outcome("path/to/game.pgn")
-```
-
 ## Contributing
 
 We welcome contributions from the open-source community! If you're interested in improving Harmon Chess Engine or adding new features, please see our [Contribution Guidelines](CONTRIBUTING.md) for details on how to get started.
