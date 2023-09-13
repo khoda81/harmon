@@ -1,13 +1,12 @@
 import sys
 
 import torch
-import transformers
 from transformers import AutoModelForCausalLM, GenerationConfig
 from transformers.generation.streamers import BaseStreamer
 
-from harmon import tokenizer
 from harmon.tokenizer import DecodeConfig, LosslessTokenizer
-from harmon.train import SAVE_PATH
+from harmon.train import MODELS_DIR
+from harmon.utils import latest_modified_subdirectory, select_from, subdirectories
 
 
 class Streamer(BaseStreamer):
@@ -24,7 +23,7 @@ class Streamer(BaseStreamer):
         else:
             raise ValueError(f"token has invalid shape={token.shape}")
 
-        decode_config = tokenizer.DecodeConfig()
+        decode_config = DecodeConfig()
         new_text = self.tokenizer.decode(self.tokens[:-8], decode_config)
         print(new_text[self.printed :], end="")
         sys.stdout.flush()
@@ -38,12 +37,23 @@ class Streamer(BaseStreamer):
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # device = torch.device("cpu")
-    model_name = "harmon-tiny"
-    model_path = SAVE_PATH / model_name
-    model = AutoModelForCausalLM.from_pretrained(model_path).to(device)
-    tokenizer = LosslessTokenizer()
 
-    model: transformers.generation
+    default = latest_modified_subdirectory(MODELS_DIR)
+    model_name = select_from(subdirectories(MODELS_DIR), default=default)
+    if model_name is None:
+        print(f"No models found in {MODELS_DIR}!")
+        print("Train using `python -m harmon.train`")
+        return
+
+    model_path = MODELS_DIR / model_name
+
+    try:
+        model = AutoModelForCausalLM.from_pretrained(model_path).to(device)
+
+    except OSError:
+        print(f"Failed to load the model form {model_path}")
+
+    tokenizer = LosslessTokenizer()
 
     generation_config = GenerationConfig.from_model_config(model.config)
     generation_config.update(
@@ -69,7 +79,6 @@ def main():
         )
 
     generate()
-
     for line in sys.stdin:
         generate(line.rstrip("\n"))
 

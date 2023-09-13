@@ -1,6 +1,5 @@
 __pycache__
 .ipynb_checkpoints
 /tmp
-/wandb
 /.pytest_cache
 /.coverage

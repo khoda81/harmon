@@ -5,25 +5,15 @@ import numpy as np
 import torch
 import tqdm.auto as tqdm
 import transformers
-
 import wandb
+
 from harmon.context_filler import ContextFiller
 from harmon.dataset import Downloader, PgnDataset
 from harmon.tokenizer import LosslessTokenizer
+from harmon.utils import ask_yes_no_question, latest_modified_subdirectory
 
-SAVE_PATH = Path(__file__).parent.parent.parent / "tmp" / "models"
-
-
-def ask_user(prompt: str) -> bool:
-    answer = input(f"{prompt} [Y/n]: ").lower()
-    while True:
-        if answer in ["", "y", "yes", "yep", "yeah"]:
-            return True
-
-        elif answer in ["n", "no", "nope", "nah"]:
-            return False
-
-        answer = input(f"Invalid answer: {answer!r}. {prompt} [Y/n]: ").lower()
+SAVE_PATH = Path(__file__).parent.parent.parent / "tmp"
+MODELS_DIR = SAVE_PATH / "models"
 
 
 def main():
@@ -31,22 +21,27 @@ def main():
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    model_name = "harmon-1.1"
-    model_path = SAVE_PATH / model_name
-
-    lr = 1e-5
+    lr = 1e-6
     batch_size = 2
     buffer_size = 32
     save_every = 1000  # games
 
+    model_name = latest_modified_subdirectory(MODELS_DIR)
+    if model_name is None:
+        print(f"No models found in {MODELS_DIR}!")
+        return
+
+    model_path = MODELS_DIR / model_name
+
     try:
+        print(f"Loading model from {model_path}")
         model = transformers.AutoModelForCausalLM.from_pretrained(model_path).to(device)
 
     except OSError:
-        print(f"Failed to load the model from {model_path}.")
+        print(f"Failed to load the model!")
 
-        if ask_user("Create new?"):
-            print("Creating new model...")
+        if ask_yes_no_question("Initialize randomly?"):
+            print("Initializing weights...")
             config = transformers.AutoConfig.from_pretrained(model_path)
             config.run_id = wandb.util.generate_id()
             model = transformers.AutoModelForCausalLM.from_config(config).to(device)
@@ -63,6 +58,7 @@ def main():
         id=model.config.run_id,
         resume="allow",
         config=model.config.to_dict(),
+        dir=SAVE_PATH / "wandb",
     )
 
     wandb.watch(model)
@@ -98,8 +94,9 @@ def main():
             unit="B",
             unit_scale=True,
             unit_divisor=1024,
+            smoothing=0.0,
         ) as download_pbar,
-        tqdm.tqdm(dataset, unit=" games") as dataset_pbar,
+        tqdm.tqdm(dataset, unit=" games", smoothing=0.0) as dataset_pbar,
     ):
         # a wrapper to make the pbar think its not done
         def dataset_wrapper():
@@ -127,9 +124,10 @@ def main():
             batch = np.array(batch, dtype=np.int64)
             batch = torch.tensor(batch, dtype=torch.int64, device=device)
 
-            # update the model
+            # forward pass
             out = model.forward(input_ids=batch, labels=batch)
 
+            # update the model
             optimizer.zero_grad()
             out.loss.backward()
             optimizer.step()
