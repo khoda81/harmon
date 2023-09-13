@@ -5,7 +5,8 @@ import transformers
 from transformers import AutoModelForCausalLM, GenerationConfig
 from transformers.generation.streamers import BaseStreamer
 
-from harmon.tokenizer import LosslessTokenizer
+from harmon import tokenizer
+from harmon.tokenizer import DecodeConfig, LosslessTokenizer
 from harmon.train import SAVE_PATH
 
 
@@ -23,7 +24,8 @@ class Streamer(BaseStreamer):
         else:
             raise ValueError(f"token has invalid shape={token.shape}")
 
-        new_text = self.tokenizer.decode(self.tokens[:-8])
+        decode_config = tokenizer.DecodeConfig()
+        new_text = self.tokenizer.decode(self.tokens[:-8], decode_config)
         print(new_text[self.printed :], end="")
         sys.stdout.flush()
         self.printed = len(new_text)

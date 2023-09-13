@@ -32,17 +32,21 @@ class Downloader(io.RawIOBase):
         return True
 
     def read(self, __size: int = -1) -> bytes | None:
-        start_byte = self.downloaded
-        end_byte = start_byte + __size if __size >= 0 else ""
+        while True:
+            try:
+                start_byte = self.downloaded
+                end_byte = start_byte + __size if __size >= 0 else ""
 
-        headers = {"Range": f"bytes={start_byte}-{end_byte}"}
-        response = self.session.get(self.url, headers=headers)
-        response.raise_for_status()
+                headers = {"Range": f"bytes={start_byte}-{end_byte}"}
+                response = self.session.get(self.url, headers=headers)
+                response.raise_for_status()
 
-        data = response.content
-        self.downloaded += len(data)
+                data = response.content
+                self.downloaded += len(data)
 
-        return data
+                return data
+            except e:
+                pass
 
 
 class PgnDataset:

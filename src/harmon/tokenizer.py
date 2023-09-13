@@ -55,7 +55,8 @@ class EncodeConfig:
 @attrs.define
 class DecodeConfig:
     collapse_paddings: bool = False
-    yield_ending_pad: bool = False
+    ending_pad: bool = False
+    special_tokens: bool = False
 
 
 @attrs.define
@@ -186,12 +187,12 @@ class SegmentedParser:
                 # this token is a normal byte
                 self.text_bytes.append(token_id)
 
-            else:
+            elif self.config.special_tokens:
                 yield from self.handle_special_token(token_id)
 
         yield from self.drain_text()
 
-        if self.config.yield_ending_pad:
+        if self.config.ending_pad:
             yield from self.drain_paddings()
 
 

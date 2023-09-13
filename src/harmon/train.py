@@ -14,56 +14,82 @@ from harmon.tokenizer import LosslessTokenizer
 SAVE_PATH = Path(__file__).parent.parent.parent / "tmp" / "models"
 
 
+def ask_user(prompt: str) -> bool:
+    answer = input(f"{prompt} [Y/n]: ").lower()
+    while True:
+        if answer in ["", "y", "yes", "yep", "yeah"]:
+            return True
+
+        elif answer in ["n", "no", "nope", "nah"]:
+            return False
+
+        answer = input(f"Invalid answer: {answer!r}. {prompt} [Y/n]: ").lower()
+
+
 def main():
+    url = "https://database.lichess.org/standard/lichess_db_standard_rated_2023-05.pgn.zst"
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    model_name = "harmon-tiny"
+    model_name = "harmon-1.1"
     model_path = SAVE_PATH / model_name
 
-    # config = transformers.AutoConfig.from_pretrained(model_path)
-    # model = transformers.AutoModelForCausalLM.from_config(config)
+    lr = 1e-5
+    batch_size = 2
+    buffer_size = 32
+    save_every = 1000  # games
 
-    model = transformers.AutoModelForCausalLM.from_pretrained(model_path)
+    try:
+        model = transformers.AutoModelForCausalLM.from_pretrained(model_path).to(device)
 
-    # TODO put run_id to config
+    except OSError:
+        print(f"Failed to load the model from {model_path}.")
 
-    # run_id = wandb.util.generate_id()
-    run_id = "yj8w1n5v"
+        if ask_user("Create new?"):
+            print("Creating new model...")
+            config = transformers.AutoConfig.from_pretrained(model_path)
+            config.run_id = wandb.util.generate_id()
+            model = transformers.AutoModelForCausalLM.from_config(config).to(device)
+
+        else:
+            print("Aborting...")
+            return
+
+    model: transformers.GPT2LMHeadModel
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
     run = wandb.init(
         project="harmon",
-        id=run_id,
+        id=model.config.run_id,
         resume="allow",
         config=model.config.to_dict(),
     )
 
-    model: transformers.GPT2LMHeadModel
-    model.to(device)
     wandb.watch(model)
 
-    tokenizer = LosslessTokenizer()
+    tokenizer = LosslessTokenizer(
+        bos_token_id=model.config.bos_token_id,
+        eos_token_id=model.config.eos_token_id,
+        pad_token_id=model.config.pad_token_id,
+    )
+
     context_filler = ContextFiller(
         tokenizer.pad_token_id,
         context_size=model.config.n_positions,
     )
 
-    wandb.log({"context_size": context_filler.context_size})
-
-    lr = 1e-5
-    wandb.log({"lr": lr})
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-
-    url = "https://database.lichess.org/standard/lichess_db_standard_rated_2023-05.pgn.zst"
-    batch_size = 4
-    wandb.log({"batch_size": batch_size})
-
-    buffer_size = 16
-
-    last_save = 0
-    save_every = 1000  # games
-
     downloader = Downloader(url)
     dataset = PgnDataset(downloader)
+
+    last_save = 0
+
+    wandb.log(
+        {
+            "lr": lr,
+            "batch_size": batch_size,
+            "context_size": context_filler.context_size,
+        }
+    )
 
     with (
         tqdm.tqdm(
