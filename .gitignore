@@ -1,10 +1,6 @@
+__pycache__
 .ipynb_checkpoints
-dataset
-model
-dist
-tmp
-src/**/__pycache__
-report
-wandb
-.pytest_cache
-.coverage
+/tmp
+/wandb
+/.pytest_cache
+/.coverage

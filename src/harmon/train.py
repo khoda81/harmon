@@ -1,7 +1,6 @@
-import itertools
 from pathlib import Path
 
-import chess
+import chess.pgn
 import numpy as np
 import torch
 import tqdm.auto as tqdm
@@ -9,64 +8,78 @@ import transformers
 
 import wandb
 from harmon.context_filler import ContextFiller
-from harmon.dataset import PgnDataset
+from harmon.dataset import Downloader, PgnDataset
 from harmon.tokenizer import LosslessTokenizer
 
-SAVE_PATH = Path(__file__).parent.parent.parent / "model" / "harmon-1.0"
+SAVE_PATH = Path(__file__).parent.parent.parent / "tmp" / "models"
 
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # config = transformers.AutoConfig.from_pretrained(SAVE_PATH)
+    model_name = "harmon-tiny"
+    model_path = SAVE_PATH / model_name
+
+    # config = transformers.AutoConfig.from_pretrained(model_path)
     # model = transformers.AutoModelForCausalLM.from_config(config)
 
-    model = transformers.AutoModelForCausalLM.from_pretrained(SAVE_PATH)
-    config = model.config
-    run_id = "103ilpg4"
+    model = transformers.AutoModelForCausalLM.from_pretrained(model_path)
 
-    model: transformers.GPT2LMHeadModel
-    model.to(device)
+    # TODO put run_id to config
 
-    tokenizer = LosslessTokenizer()
-    context_filler = ContextFiller(
-        tokenizer.pad_token_id,
-        context_size=512,
-    )
-
-    lr = 1e-6
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-
-    url = "https://database.lichess.org/standard/lichess_db_standard_rated_2023-05.pgn.zst"
-    batch_size = 1
-    buffer_size = 16
-
-    last_save = 0
-    save_every = 1000  # games
+    # run_id = wandb.util.generate_id()
+    run_id = "yj8w1n5v"
 
     run = wandb.init(
         project="harmon",
         id=run_id,
         resume="allow",
-        config={
-            "train_options": {
-                "lr": lr,
-                "batch_size": batch_size,
-                "train_context_size": context_filler.context_size,
-            },
-            "model_config": config.to_dict(),
-        },
+        config=model.config.to_dict(),
     )
 
+    model: transformers.GPT2LMHeadModel
+    model.to(device)
     wandb.watch(model)
 
+    tokenizer = LosslessTokenizer()
+    context_filler = ContextFiller(
+        tokenizer.pad_token_id,
+        context_size=model.config.n_positions,
+    )
+
+    wandb.log({"context_size": context_filler.context_size})
+
+    lr = 1e-5
+    wandb.log({"lr": lr})
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+
+    url = "https://database.lichess.org/standard/lichess_db_standard_rated_2023-05.pgn.zst"
+    batch_size = 4
+    wandb.log({"batch_size": batch_size})
+
+    buffer_size = 16
+
+    last_save = 0
+    save_every = 1000  # games
+
+    downloader = Downloader(url)
+    dataset = PgnDataset(downloader)
+
     with (
-        PgnDataset(url) as dataset,
+        tqdm.tqdm(
+            iterable=None,
+            total=downloader.download_size,
+            unit="B",
+            unit_scale=True,
+            unit_divisor=1024,
+        ) as download_pbar,
         tqdm.tqdm(dataset, unit=" games") as dataset_pbar,
     ):
         # a wrapper to make the pbar think its not done
         def dataset_wrapper():
-            yield from dataset_pbar
+            for game in dataset_pbar:
+                download_pbar.update(downloader.downloaded - download_pbar.n)
+                yield game
 
         wrapper = dataset_wrapper()
 
@@ -101,11 +114,10 @@ def main():
                 context_filler.buffer.extend(get_samples(buffer_size))
 
             if last_save + save_every < dataset_pbar.n:
-                print(f"Saving model to {SAVE_PATH}...")
-                model.save_pretrained(SAVE_PATH)
+                model.save_pretrained(model_path)
                 last_save += save_every
 
-    model.save_pretrained(SAVE_PATH)
+    model.save_pretrained(model_path)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 # Harmon Chess Engine
 
-![Harmon Chess Engine Logo](./images/logo.png) <!-- Add your project logo if available -->
+<!-- ![Harmon Chess Engine Logo](./images/logo.png) -->
 
 Harmon Chess Engine is a cutting-edge chess engine that leverages the power of transformer-based machine learning models to revolutionize the world of computer chess. Unlike traditional chess engines, Harmon is designed to understand and exploit human mistakes, making it a formidable opponent for chess players of all levels.
 

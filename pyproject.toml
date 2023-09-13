@@ -46,5 +46,14 @@ exclude_also = [
 ]
 
 [tool.pytest.ini_options]
-addopts = "--doctest-modules --doctest-report ndiff --doctest-glob='*.rst' --doctest-glob='*.txt' --cov='harmon' --cov-config=.coveragerc"
+addopts = """
+    -v
+    --doctest-modules
+    --doctest-report ndiff
+    --doctest-glob='*.rst'
+    --doctest-glob='*.txt'
+    --cov='harmon'
+    --cov-config=.coveragerc
+"""
+
 doctest_optionflags = "NORMALIZE_WHITESPACE ELLIPSIS"
